@@ -9,53 +9,27 @@ import {
   MoreOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { _get } from "../../Helper";
 
 const { Search } = Input;
-
-const courts = [
-  {
-    id: 1,
-    name: "Supreme Court of New York",
-    location: "Manhattan",
-    address: "60 Centre Street, New York, NY 10007",
-    presidingJudge: "Hon. Robert Martinez",
-  },
-  {
-    id: 2,
-    name: "Los Angeles Superior Court",
-    location: "Downtown LA",
-    address: "111 N Hill St, Los Angeles, CA 90012",
-    presidingJudge: "Hon. Jennifer Davis",
-  },
-  {
-    id: 3,
-    name: "Cook County Circuit Court",
-    location: "Chicago",
-    address: "50 W Washington St, Chicago, IL 60602",
-    presidingJudge: "Hon. William Thompson",
-  },
-];
 export default function CourtList() {
   const navigate = useNavigate();
-  // const [courts, seCourts] = useState([])
+  const [courts, seCourts] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // useEffect(() => {
-  //   fetchCourts()
-  // }, [])
-
-  // const fetchCourts = async () => {
-  //   setLoading(true)
-  //   try {
-  //     const response = await axios.get("/api/courts")
-  //     setCourts(response.data)
-  //   } catch (error) {
-  //     console.error("Error fetching courts:", error)
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
+  useEffect(() => {
+    _get(
+      "getCourts",
+      (res) => {
+        if (res.success) {
+          seCourts(res.data);
+        }
+      },
+      (err) => {
+        console.error("Error fetching courts:", err);
+      }
+    );
+  }, []);
 
   const getActionItems = (record) => [
     {
@@ -83,6 +57,18 @@ export default function CourtList() {
       dataIndex: "name",
       key: "name",
       sorter: true,
+      render: (text, record) => (
+        <>
+          <Button
+            type="link"
+            onClick={() => navigate(`/court-cases/${record.court_id}`)}
+            style={{ padding: 0, cursor: "pointer" }}
+          >
+            {text.slice(0, 30)}
+            {text.length > 30 && "......."}
+          </Button>
+        </>
+      ),
     },
     {
       title: "Presiding Judge",

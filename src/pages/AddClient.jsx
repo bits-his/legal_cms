@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, Form, Input, Button, Row, Col, DatePicker, message } from "antd";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { _post } from "../../Helper";
 
 const { TextArea } = Input;
@@ -29,16 +28,6 @@ export default function AddClient() {
         setLoading(false);
       }
     );
-    // try {
-    //   await axios.post("client", values);
-    //   message.success("Client added successfully!");
-    //   navigate("/clients");
-    // } catch (error) {
-    //   message.error("Failed to add client");
-    //   console.error("Error adding client:", error);
-    // } finally {
-    //   setLoading(false);
-    // }
   };
 
   return (
@@ -98,7 +87,7 @@ export default function AddClient() {
               <Form.Item
                 label="Address"
                 name="address"
-                rules={[{ required: true, message: "Please enter address" }]}
+                rules={[{ message: "Please enter address" }]}
               >
                 <TextArea rows={1} placeholder="Enter client address" />
               </Form.Item>
@@ -108,7 +97,7 @@ export default function AddClient() {
                 label="Email"
                 name="email"
                 rules={[
-                  { required: true, message: "Please enter email" },
+                  { message: "Please enter email" },
                   { type: "email", message: "Please enter valid email" },
                 ]}
               >

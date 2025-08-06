@@ -1,29 +1,34 @@
+import { useState } from "react";
+import { Card, Form, Input, Button, Row, Col, message } from "antd";
+import { useNavigate } from "react-router-dom";
+import { _post } from "../../Helper";
 
-import { useState } from "react"
-import { Card, Form, Input, Button, Row, Col, message } from "antd"
-import { useNavigate } from "react-router-dom"
-import axios from "axios"
-
-const { TextArea } = Input
+const { TextArea } = Input;
 
 export default function AddCourt() {
-  const navigate = useNavigate()
-  const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate();
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
   const onFinish = async (values) => {
-    setLoading(true)
-    try {
-      await axios.post("/api/courts", values)
-      message.success("Court added successfully!")
-      form.resetFields()
-    } catch (error) {
-      message.error("Failed to add court")
-      console.error("Error adding court:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
+    setLoading(true);
+    _post(
+      "addCourt",
+      values,
+      (res) => {
+        if (res.success) {
+          message.success("Court added successfully!");
+          navigate("/courts");
+          setLoading(false);
+        }
+      },
+      (err) => {
+        message.error("Failed to add court");
+        console.error("Error adding court:", err);
+        setLoading(false);
+      }
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -53,7 +58,11 @@ export default function AddCourt() {
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
-              <Form.Item label="Address" name="address" rules={[{ required: true, message: "Please enter address" }]}>
+              <Form.Item
+                label="Address"
+                name="address"
+                rules={[{ message: "Please enter address" }]}
+              >
                 <TextArea rows={1} placeholder="Enter court address" />
               </Form.Item>
             </Col>
@@ -61,7 +70,7 @@ export default function AddCourt() {
               <Form.Item
                 label="Presiding Judge"
                 name="presidingJudge"
-                rules={[{ required: true, message: "Please enter presiding judge name" }]}
+                rules={[{ message: "Please enter presiding judge name" }]}
               >
                 <Input placeholder="Enter presiding judge name" />
               </Form.Item>
@@ -78,7 +87,5 @@ export default function AddCourt() {
         </Form>
       </Card>
     </div>
-  )
+  );
 }
-
-
