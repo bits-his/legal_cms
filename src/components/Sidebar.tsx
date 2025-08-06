@@ -19,7 +19,7 @@ const Sidebar: React.FC = () => {
     },
     {
       key: "/cases",
-      label: "View Cases", 
+      label: "Cases Registration", 
       icon: <FileTextOutlined />,
     },
     // {
@@ -57,12 +57,12 @@ const Sidebar: React.FC = () => {
     {
       key: "/clients",
       icon: <UserOutlined />,
-      label: "View Clients",
+      label: "Clients Registration",
     },
     {
       key: "/courts",
       icon: <BankOutlined />,
-      label: "View Courts",
+      label: "Courts Registration",
     },
   ]
 
@@ -78,7 +78,7 @@ const Sidebar: React.FC = () => {
     <Sider width={250} className="bg-white shadow-sm flex flex-col">
       <div className="flex-1 flex flex-col">
         <div className="p-4 border-b border-gray-200">
-          <h2 className="text-lg font-bold text-gray-800">Legal CMS</h2>
+          <h2 className="text-lg font-bold text-gray-800">Prudent Attorneys (AP)</h2>
         </div>
         <div className="flex-1 overflow-y-auto">
           <Menu

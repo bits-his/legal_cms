@@ -1,27 +1,27 @@
-import { Routes, Route } from "react-router-dom"
-import { Layout } from "antd"
-import Sidebar from "./components/Sidebar"
-import Header from "./components/Header"
-import Dashboard from "./pages/Dashboard"
-import CasesList from "./pages/CasesList"
-import AddCase from "./pages/AddCase"
-import ClientsList from "./pages/ClientsList"
-import AddClient from "./pages/AddClient"
-import AddCourt from "./pages/AddCourt"
-import ViewCase from "./pages/ViewCase"
-import CourtList from "./pages/CourtList"
-import CaseDocumentViewer from "./pages/ClientCaseList"
-import ClientAddCase from "./pages/ClientAddCase"
-import CourtCaseLsit from "./pages/CourtCaseLsit"
+import { Routes, Route } from "react-router-dom";
+import { Layout } from "antd";
+import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
+import Dashboard from "./pages/Dashboard";
+import CasesList from "./pages/CasesList";
+import AddCase from "./pages/AddCase";
+import ClientsList from "./pages/ClientsList";
+import AddClient from "./pages/AddClient";
+import AddCourt from "./pages/AddCourt";
+import ViewCase from "./pages/ViewCase";
+import CourtList from "./pages/CourtList";
+import CaseDocumentViewer from "./pages/ClientCaseList";
+import ClientAddCase from "./pages/ClientAddCase";
+import CourtCaseLsit from "./pages/CourtCaseLsit";
 
-const { Content } = Layout
+const { Content } = Layout;
 
 function App() {
   return (
     <Layout className="min-h-screen">
       <Sidebar />
       <Layout>
-        {/* <Header /> */}
+        <Header />
         <Content className="p-6 bg-gray-50">
           <Routes>
             <Route path="/" element={<Dashboard />} />
@@ -39,7 +39,7 @@ function App() {
         </Content>
       </Layout>
     </Layout>
-  )
+  );
 }
 
-export default App
+export default App;
