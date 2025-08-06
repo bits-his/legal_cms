@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Layout, Menu, Input, Button, Card, message, Modal } from "antd";
-import { SearchOutlined, FilePdfOutlined } from "@ant-design/icons";
+import { Layout, Menu, Input, Button, message } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
 import "./CaseDocumentViewer.css";
 const { Sider, Content } = Layout;
 import { useParams } from "react-router-dom";

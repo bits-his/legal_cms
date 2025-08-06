@@ -1,35 +1,9 @@
 import type React from "react";
-import { Layout, Avatar, Dropdown, Space } from "antd";
-import {
-  UserOutlined,
-  LogoutOutlined,
-  SettingOutlined,
-} from "@ant-design/icons";
+import { Layout } from "antd";
 
 const { Header: AntHeader } = Layout;
 
 const Header: React.FC = () => {
-  const userMenuItems = [
-    {
-      key: "profile",
-      icon: <UserOutlined />,
-      label: "Profile",
-    },
-    {
-      key: "settings",
-      icon: <SettingOutlined />,
-      label: "Settings",
-    },
-    {
-      type: "divider" as const,
-    },
-    {
-      key: "logout",
-      icon: <LogoutOutlined />,
-      label: "Logout",
-    },
-  ];
-
   return (
     <AntHeader
       className="flex justify-between items-center shadow-sm border-b border-gray-200"

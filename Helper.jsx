@@ -1,6 +1,6 @@
 // import { useLocation } from "react-router";
-// export const server_url = 'https://results-associates.co/server/new-hotel-server'
-export const server_url = "http://localhost:34567";
+export const server_url = 'https://server.brainstorm.ng/legal_cms_backend'
+// export const server_url = "http://localhost:34567";
 // export const server_url = " http://192.168.1.67:34567";
 // export const server_url = "https://server.brainstorm.ng/yazid-academy";
 // export const server_url = "https://server.brainstorm.ng/skcooly-api";

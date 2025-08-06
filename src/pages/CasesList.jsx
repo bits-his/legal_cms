@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
-import { Card, Table, Button, Input, Tag, Dropdown, Modal } from "antd";
+import { Card, Table, Button, Input, Tag, Modal } from "antd";
 import {
   PlusOutlined,
   SearchOutlined,
-  EyeOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  MoreOutlined,
+  EyeOutlined
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { _get, _post } from "../../Helper";

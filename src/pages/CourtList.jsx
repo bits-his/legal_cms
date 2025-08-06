@@ -5,7 +5,6 @@ import {
   SearchOutlined,
   EyeOutlined,
   EditOutlined,
-  DeleteOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
