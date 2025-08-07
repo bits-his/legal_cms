@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Layout, Menu, Input, Button, message } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { Layout, Menu, Input, Button, message, Drawer } from "antd";
+import { SearchOutlined, MenuOutlined, CloseOutlined } from "@ant-design/icons";
 import "./CaseDocumentViewer.css";
 const { Sider, Content } = Layout;
 import { useParams } from "react-router-dom";
@@ -15,7 +15,18 @@ const CaseDocumentViewer = () => {
   const [loading, setLoading] = useState(false);
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [selectedPDFData, setSelectedPDFData] = useState(null);
+  const [mobileSidebarVisible, setMobileSidebarVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const clientId = useParams().id;
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 992);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const fetchClientDetails = () => {
     setLoading(true);
@@ -35,7 +46,6 @@ const CaseDocumentViewer = () => {
           }));
           setClientCases(casesWithKeys);
 
-          // Auto-select and load first case
           if (casesWithKeys.length > 0) {
             handleViewPDF(casesWithKeys[0]);
           }
@@ -60,7 +70,8 @@ const CaseDocumentViewer = () => {
       (res) => {
         if (res.success) {
           setSelectedPDFData(res.data[0]);
-          setShowPDFModal(false); // We're showing in main content now
+          setShowPDFModal(false);
+          if (isMobile) setMobileSidebarVisible(false);
         } else {
           message.error("Failed to fetch case details");
         }
@@ -129,47 +140,104 @@ const CaseDocumentViewer = () => {
 
   return (
     <Layout className="case-document-layout">
-      {/* Sidebar for suit numbers */}
-      <Sider width={250} className="case-sider">
-        <div className="sider-header">
-          <h3>Case Documents</h3>
-          <Input
-            placeholder="Search cases..."
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className="case-search"
+      {/* Mobile menu button */}
+      {isMobile && (
+        <div className="mobile-menu-button">
+          <Button
+            icon={mobileSidebarVisible ? <CloseOutlined /> : <MenuOutlined />}
+            onClick={() => setMobileSidebarVisible(!mobileSidebarVisible)}
+            type="primary"
           />
         </div>
+      )}
 
-        <Menu
-          mode="inline"
-          selectedKeys={selectedCase ? [selectedCase.key] : []}
-          className="case-menu"
-          loading={loading}
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <Sider width={250} className="case-sider">
+          <div className="sider-header">
+            <h3>Case Documents</h3>
+            <Input
+              placeholder="Search cases..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="case-search"
+            />
+          </div>
+
+          <Menu
+            mode="inline"
+            selectedKeys={selectedCase ? [selectedCase.key] : []}
+            className="case-menu"
+            loading={loading}
+          >
+            {filteredCases.map((caseItem) => (
+              <Menu.Item
+                key={caseItem.key}
+                onClick={() => handleViewPDF(caseItem)}
+                className="case-menu-item"
+              >
+                <div className="case-menu-content">
+                  <span className="suit-no">{caseItem.suit_no}</span>
+                  <span className="case-title">{caseItem.title}</span>
+                </div>
+              </Menu.Item>
+            ))}
+          </Menu>
+        </Sider>
+      )}
+
+      {/* Mobile Drawer */}
+      {isMobile && (
+        <Drawer
+          title="Case Documents"
+          placement="left"
+          closable={true}
+          onClose={() => setMobileSidebarVisible(false)}
+          open={mobileSidebarVisible}
+          width={280}
+          bodyStyle={{ padding: 0 }}
         >
-          {filteredCases.map((caseItem) => (
-            <Menu.Item
-              key={caseItem.key}
-              onClick={() => handleViewPDF(caseItem)}
-              className="case-menu-item"
-            >
-              <div className="case-menu-content">
-                <span className="suit-no">{caseItem.suit_no}</span>
-                <span className="case-title">{caseItem.title}</span>
-              </div>
-            </Menu.Item>
-          ))}
-        </Menu>
-      </Sider>
+          <div className="sider-header">
+            <Input
+              placeholder="Search cases..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="case-search"
+            />
+          </div>
+          <Menu
+            mode="inline"
+            selectedKeys={selectedCase ? [selectedCase.key] : []}
+            className="case-menu"
+            loading={loading}
+          >
+            {filteredCases.map((caseItem) => (
+              <Menu.Item
+                key={caseItem.key}
+                onClick={() => handleViewPDF(caseItem)}
+                className="case-menu-item"
+              >
+                <div className="case-menu-content">
+                  <span className="suit-no">{caseItem.suit_no}</span>
+                  <span className="case-title">{caseItem.title}</span>
+                </div>
+              </Menu.Item>
+            ))}
+          </Menu>
+        </Drawer>
+      )}
 
       {/* Main content area */}
-      <Layout className="case-content-layout">
+      <Layout className="case-content-layout ml-0">
         <Content className="case-content">
           {selectedPDFData ? (
             <div className="document-container">
               <div className="document-header">
-                <h1>Client Name: <b>{selectedPDFData.client_name}</b></h1>
+                <h1>
+                  Client Name: <b>{selectedPDFData.client_name}</b>
+                </h1>
                 <Button type="primary" onClick={downloadPDF}>
                   Download PDF
                 </Button>
@@ -314,7 +382,16 @@ const CaseDocumentViewer = () => {
               <div className="empty-state">
                 <h2>Select a case from the sidebar to view details</h2>
                 <p>
-                  Click on any suit number to display the full case document
+                  {isMobile ? (
+                    <Button
+                      type="primary"
+                      onClick={() => setMobileSidebarVisible(true)}
+                    >
+                      Open Case List
+                    </Button>
+                  ) : (
+                    "Click on any suit number to display the full case document"
+                  )}
                 </p>
               </div>
             </div>

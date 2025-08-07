@@ -1,17 +1,14 @@
-import type React from "react";
+import React from "react";
 import { Layout } from "antd";
 
 const { Header: AntHeader } = Layout;
 
 const Header: React.FC = () => {
   return (
-    <AntHeader
-      className="flex justify-between items-center shadow-sm border-b border-gray-200"
-      style={{ textAlign: "center", padding: "50px" }}
-    >
-      <div className="font-semibold text-gray-800" style={{ fontSize: "70px", textAlign: "center", width: "100%", padding: "30px"}}>
+    <AntHeader className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 lg:px-12">
+      <h1 className="text-center text-xl sm:text-2xl md:text-4xl lg:text-5xl font-semibold text-gray-800">
         Auwal I Magashi & Co.
-      </div>
+      </h1>
     </AntHeader>
   );
 };

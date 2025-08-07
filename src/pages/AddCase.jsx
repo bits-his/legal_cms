@@ -163,6 +163,7 @@ export default function AddCase() {
                 rules={[{ required: true, message: "Select client" }]}
               >
                 <Select
+                  className="w-full sm:w-[45%]"
                   placeholder="Select client"
                   onChange={(value) => updateCaseData("clientId", value)}
                 >
@@ -181,6 +182,7 @@ export default function AddCase() {
                 rules={[{ required: true, message: "Select court" }]}
               >
                 <Select
+                  className="w-full sm:w-[45%]"
                   placeholder="Select court"
                   onChange={(value) => updateCaseData("courtId", value)}
                 >
@@ -199,6 +201,7 @@ export default function AddCase() {
                 rules={[{ required: true, message: "Enter suit number" }]}
               >
                 <Input
+                  className="w-full sm:w-[45%]"
                   placeholder="Suit number"
                   onChange={(e) => updateCaseData("suitNo", e.target.value)}
                 />
@@ -210,8 +213,9 @@ export default function AddCase() {
           <Row gutter={[16, 16]}>
             <Col span={24}>
               <h3 className="mb-3 font-medium">Parties</h3>
-              <Space.Compact className="w-full mb-3">
+              <Space.Compact className="w-full flex flex-col sm:flex-row gap-2 mb-3">
                 <Input
+                  className="w-full sm:w-[45%]"
                   value={caseData.newPartyName}
                   onChange={(e) =>
                     updateCaseData("newPartyName", e.target.value)
@@ -220,6 +224,7 @@ export default function AddCase() {
                   style={{ width: "45%" }}
                 />
                 <Select
+                  className="w-full sm:w-[45%]"
                   value={caseData.newPartyType}
                   onChange={(val) => updateCaseData("newPartyType", val)}
                   placeholder="Type"
@@ -231,6 +236,7 @@ export default function AddCase() {
                   <Option value="Other">Other</Option>
                 </Select>
                 <Button
+                  className="w-full sm:w-[45%]"
                   icon={<PlusOutlined />}
                   type="primary"
                   onClick={addParty}
@@ -238,27 +244,32 @@ export default function AddCase() {
                   Add
                 </Button>
               </Space.Compact>
-              <List
-                size="small"
-                bordered
-                dataSource={caseData.parties}
-                renderItem={(item) => (
-                  <List.Item
-                    key={`party-${item.id}`}
-                    actions={[
-                      <Button
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={() => removeFromList("parties", item.id)}
-                      />,
-                    ]}
-                  >
-                    {item.name} - {item.type}
-                  </List.Item>
-                )}
-              />
+
+              <div className="overflow-x-auto">
+                <List
+                  size="small"
+                  bordered
+                  dataSource={caseData.parties}
+                  renderItem={(item) => (
+                    <List.Item
+                      key={`party-${item.id}`}
+                      actions={[
+                        <Button
+                          className="w-full sm:w-[45%]"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={() => removeFromList("parties", item.id)}
+                        />,
+                      ]}
+                    >
+                      {item.name} - {item.type}
+                    </List.Item>
+                  )}
+                />
+              </div>
               <Form.Item label="Counsel For" name="counselFor">
                 <Select
+                  className="w-full sm:w-[45%]"
                   value={caseData.subjectTo}
                   onChange={(val) => updateCaseData("subjectTo", val)}
                   placeholder="Select subject"
@@ -290,10 +301,7 @@ export default function AddCase() {
               </Form.Item>
             </Col>
             <Col span={24}>
-              <Form.Item
-                label="Crux of Matter"
-                name="cruxOfMatter"
-              >
+              <Form.Item label="Crux of Matter" name="cruxOfMatter">
                 <CKEditor
                   editor={ClassicEditor}
                   onChange={(e, editor) =>
@@ -306,42 +314,48 @@ export default function AddCase() {
 
           {/* Witnesses & Documents */}
           <Row gutter={[16, 16]}>
-            <Col md={12}>
+            <Col xs={24} md={12}>
               <h3>Witnesses</h3>
-              <Space.Compact className="w-full mb-3">
+              <Space.Compact className="w-full flex flex-col sm:flex-row gap-2 mb-3">
                 <Input
+                  className="w-full sm:w-[45%]"
                   value={caseData.newWitness}
                   onChange={(e) => updateCaseData("newWitness", e.target.value)}
                   placeholder="Witness name"
                 />
                 <Button
+                  className="w-full sm:w-[45%]"
                   icon={<PlusOutlined />}
                   onClick={() => addToList("witnesses", "newWitness")}
                 >
                   Add
                 </Button>
               </Space.Compact>
-              <List
-                dataSource={caseData.witnesses}
-                renderItem={(item) => (
-                  <List.Item
-                    key={`witness-${item.id}`}
-                    actions={[
-                      <Button
-                        icon={<DeleteOutlined />}
-                        onClick={() => removeFromList("witnesses", item.id)}
-                      />,
-                    ]}
-                  >
-                    {item.name}
-                  </List.Item>
-                )}
-              />
+              <div className="overflow-x-auto">
+                <List
+                  dataSource={caseData.witnesses}
+                  renderItem={(item) => (
+                    <List.Item
+                      key={`witness-${item.id}`}
+                      actions={[
+                        <Button
+                          className="w-full sm:w-[45%]"
+                          icon={<DeleteOutlined />}
+                          onClick={() => removeFromList("witnesses", item.id)}
+                        />,
+                      ]}
+                    >
+                      {item.name}
+                    </List.Item>
+                  )}
+                />
+              </div>
             </Col>
-            <Col md={12}>
+            <Col xs={24} md={12}>
               <h3>Documents</h3>
-              <Space.Compact className="w-full mb-3">
+              <Space.Compact className="w-full flex flex-col sm:flex-row gap-2 mb-3">
                 <Input
+                  className="w-full sm:w-[45%]"
                   value={caseData.newDocument}
                   onChange={(e) =>
                     updateCaseData("newDocument", e.target.value)
@@ -349,35 +363,39 @@ export default function AddCase() {
                   placeholder="Document name"
                 />
                 <Button
+                  className="w-full sm:w-[45%]"
                   icon={<PlusOutlined />}
                   onClick={() => addToList("documents", "newDocument")}
                 >
                   Add
                 </Button>
               </Space.Compact>
-              <List
-                dataSource={caseData.documents}
-                renderItem={(item) => (
-                  <List.Item
-                    key={`doc-${item.id}`}
-                    actions={[
-                      <Button
-                        icon={<DeleteOutlined />}
-                        onClick={() => removeFromList("documents", item.id)}
-                      />,
-                    ]}
-                  >
-                    {item.name}
-                  </List.Item>
-                )}
-              />
+              <div className="overflow-x-auto">
+                <List
+                  dataSource={caseData.documents}
+                  renderItem={(item) => (
+                    <List.Item
+                      key={`doc-${item.id}`}
+                      actions={[
+                        <Button
+                          className="w-full sm:w-[45%]"
+                          icon={<DeleteOutlined />}
+                          onClick={() => removeFromList("documents", item.id)}
+                        />,
+                      ]}
+                    >
+                      {item.name}
+                    </List.Item>
+                  )}
+                />
+              </div>
             </Col>
           </Row>
 
           <Divider />
 
           <Row gutter={[16, 16]}>
-            <Col md={12}>
+            <Col xs={24} md={12}>
               <Form.Item label="Expenses" name="expenses">
                 <TextArea
                   rows={4}
@@ -386,7 +404,7 @@ export default function AddCase() {
                 />
               </Form.Item>
             </Col>
-            <Col md={12}>
+            <Col xs={24} md={12}>
               <Form.Item label="Status of the Matter" name="statusOfMatter">
                 <CKEditor
                   editor={ClassicEditor}
@@ -399,9 +417,19 @@ export default function AddCase() {
           </Row>
         </Card>
 
-        <div className="flex justify-end mt-6 space-x-4">
-          <Button onClick={() => navigate("/cases")}>Cancel</Button>
-          <Button type="primary" htmlType="submit" loading={loading}>
+        <div className="flex flex-col sm:flex-row justify-end mt-6 gap-4">
+          <Button
+            onClick={() => navigate("/cases")}
+            className="w-full sm:w-auto"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+            className="w-full sm:w-auto"
+          >
             Save Case
           </Button>
         </div>

@@ -1,42 +1,94 @@
 import { useEffect, useState } from "react";
-import { Layout, Menu, Input, Button, message } from "antd";
-import { SearchOutlined, FilePdfOutlined } from "@ant-design/icons";
-import "./CaseDocumentViewer.css";
-const { Sider, Content } = Layout;
+import { Layout, Menu, Input, Button, message, Drawer } from "antd";
+import {
+  SearchOutlined,
+  FilePdfOutlined,
+  MenuUnfoldOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import { _get, _post } from "../../Helper";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import "./CaseDocumentViewer.css";
 
-const CourtCaseList = () => {
+const { Sider, Content } = Layout;
+
+const CaseDocumentViewer = () => {
   const [selectedCase, setSelectedCase] = useState(null);
   const [searchText, setSearchText] = useState("");
-  const [courtCases, setCourtCases] = useState([]);
+  const [clientCases, setClientCases] = useState([]);
   const [loading, setLoading] = useState(false);
-  const court_id = useParams().id;
+  const [mobileSidebarVisible, setMobileSidebarVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const clientId = useParams().id;
 
-  const getCourtCases = () => {
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 992);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const fetchClientDetails = () => {
     setLoading(true);
-    _post(
-      `getCaseByCourt`,
-      { court_id },
+    _get(
+      `getClientDetails/${clientId}`,
       (res) => {
         if (res.success) {
-          setCourtCases(res.data);
+          const casesData = res.data || [];
+          const casesWithKeys = casesData.map((caseItem, index) => ({
+            ...caseItem,
+            key: `CS${index + 1}`,
+            title: caseItem.subject_matter
+              ? caseItem.subject_matter
+                  .replace(/<[^>]*>/g, "")
+                  .substring(0, 60) + "..."
+              : `Case ${caseItem.suit_no}`,
+          }));
+          setClientCases(casesWithKeys);
+
+          if (casesWithKeys.length > 0) {
+            handleViewPDF(casesWithKeys[0]);
+          }
         } else {
-          message.error("Failed to fetch court cases");
+          message.error(res.message || "Failed to load client details");
         }
         setLoading(false);
       },
       () => {
-        message.error("Server error while fetching court cases");
+        message.error("Failed to load client details");
         setLoading(false);
       }
     );
   };
 
-  const downloadPDF = (caseData) => {
-    const input = document.getElementById(`pdf-content-${caseData.suitNo}`);
+  const handleViewPDF = (record) => {
+    setSelectedCase(record);
+    setLoading(true);
+    _post(
+      `getCaseBySuitNo`,
+      { suitNo: record.suit_no },
+      (res) => {
+        if (res.success) {
+          setSelectedPDFData(res.data[0]);
+          if (isMobile) setMobileSidebarVisible(false);
+        } else {
+          message.error("Failed to fetch case details");
+        }
+        setLoading(false);
+      },
+      () => {
+        message.error("Server error while fetching case data");
+        setLoading(false);
+      }
+    );
+  };
+
+  const downloadPDF = () => {
+    const input = document.querySelector(".pdf-content");
     const originalBackground = input.style.background;
     input.style.background = "white";
 
@@ -68,17 +120,17 @@ const CourtCaseList = () => {
         heightLeft -= pageHeight;
       }
 
-      pdf.save(`Case_Summary_${caseData.suitNo}.pdf`);
+      pdf.save(`Case_Summary_${selectedPDFData?.suitNo}.pdf`);
     });
   };
 
   useEffect(() => {
-    getCourtCases();
-  }, [court_id]);
+    fetchClientDetails();
+  }, [clientId]);
 
-  const filteredCases = courtCases.filter(
+  const filteredCases = clientCases.filter(
     (caseItem) =>
-      caseItem.suitNo?.toLowerCase().includes(searchText.toLowerCase()) ||
+      caseItem.suit_no?.toLowerCase().includes(searchText.toLowerCase()) ||
       caseItem.subject_matter
         ?.toLowerCase()
         .includes(searchText.toLowerCase()) ||
@@ -89,195 +141,197 @@ const CourtCaseList = () => {
     return { __html: html || "Not specified" };
   };
 
+  const renderSidebarContent = () => (
+    <>
+      <div className="p-4 border-b">
+        <h3 className="text-lg font-semibold">Client Cases</h3>
+        <Input
+          placeholder="Search cases..."
+          prefix={<SearchOutlined />}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          className="case-search mt-2"
+          allowClear
+        />
+      </div>
+      <Menu
+        mode="inline"
+        selectedKeys={selectedCase ? [selectedCase.key] : []}
+        className="case-menu"
+      >
+        {filteredCases.map((caseItem) => (
+          <Menu.Item
+            key={caseItem.key}
+            onClick={() => handleViewPDF(caseItem)}
+            className="case-menu-item"
+          >
+            <div className="case-menu-content">
+              <span className="suit-no font-medium">{caseItem.suit_no}</span>
+              <span className="case-title text-sm text-gray-600 truncate">
+                {caseItem.title}
+              </span>
+            </div>
+          </Menu.Item>
+        ))}
+      </Menu>
+    </>
+  );
+
   return (
-    <Layout className="case-document-layout">
-      {/* Sidebar for suit numbers */}
-      <Sider width={250} className="case-sider">
-        <div className="sider-header">
-          <h3>Court Cases</h3>
-          <Input
-            placeholder="Search cases..."
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className="case-search"
-          />
-        </div>
+    <Layout className="case-document-layout min-h-screen bg-white">
+      {/* Mobile Header */}
+      <div className="lg:hidden flex items-center p-3 shadow-sm bg-white sticky top-0 z-50">
+        <Button
+          type="text"
+          icon={
+            mobileSidebarVisible ? <CloseOutlined /> : <MenuUnfoldOutlined />
+          }
+          onClick={() => setMobileSidebarVisible(!mobileSidebarVisible)}
+          className="mr-2"
+        />
+        <h1 className="text-lg font-semibold truncate">
+          {selectedCase?.client_name || "Client Cases"}
+        </h1>
+      </div>
 
-        <Menu
-          mode="inline"
-          selectedKeys={selectedCase ? [selectedCase.suitNo] : []}
-          className="case-menu"
-          loading={loading}
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <Sider
+          width={280}
+          className="case-sider hidden lg:block bg-white border-r"
+          theme="light"
         >
-          {filteredCases.map((caseItem) => (
-            <Menu.Item
-              key={caseItem.suitNo}
-              onClick={() => setSelectedCase(caseItem)}
-              className="case-menu-item"
-            >
-              <div className="case-menu-content">
-                <span className="suit-no">{caseItem.suitNo}</span>
-                <span className="client-name">{caseItem.client_name}</span>
-              </div>
-            </Menu.Item>
-          ))}
-        </Menu>
-      </Sider>
+          {renderSidebarContent()}
+        </Sider>
+      )}
 
-      {/* Main content area */}
-      <Layout className="case-content-layout">
-        <Content className="case-content">
-          {selectedCase ? (
+      {/* Mobile Drawer */}
+      <Drawer
+        title="Client Cases"
+        placement="left"
+        open={mobileSidebarVisible}
+        onClose={() => setMobileSidebarVisible(false)}
+        width={280}
+        bodyStyle={{ padding: 0 }}
+        headerStyle={{ padding: 16 }}
+      >
+        {renderSidebarContent()}
+      </Drawer>
+
+      {/* Main Content */}
+      <Layout className="case-content-layout ml-0">
+        <Content className="case-content p-4 md:p-6">
+          {selectedCase && selectedPDFData ? (
             <div className="document-container">
-              <div className="document-header">
+              <div className="document-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
-                  <h1>
-                    Court: <b>{selectedCase.court_name}</b>
+                  <h1 className="text-xl font-semibold">
+                    Client:{" "}
+                    <span className="font-normal">
+                      {selectedPDFData.client_name}
+                    </span>
                   </h1>
-                  <h2>
-                    Client: <b>{selectedCase.client_name}</b>
-                  </h2>
                 </div>
                 <Button
                   type="primary"
-                  onClick={() => downloadPDF(selectedCase)}
+                  onClick={downloadPDF}
                   icon={<FilePdfOutlined />}
+                  size={isMobile ? "middle" : "large"}
                 >
                   Download PDF
                 </Button>
               </div>
 
-              <div
-                id={`pdf-content-${selectedCase.suitNo}`}
-                className="pdf-content"
-                style={{ padding: "20px" }}
-              >
-                <h1
-                  style={{
-                    textAlign: "center",
-                    textDecoration: "underline",
-                    marginBottom: "20px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  CASE DETAILS
+              <div className="pdf-content bg-white p-4 md:p-6 rounded-lg shadow-sm border">
+                <h1 className="text-center underline font-bold mb-6 text-xl">
+                  DETAILED SUMMARY OF INFORMATION ON CHAIRMAN'S CASES AT THE
+                  HIGH COURT
                 </h1>
 
-                <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    marginBottom: "20px",
-                  }}
-                >
-                  <tbody>
-                    <tr>
-                      <td
-                        style={{
-                          fontWeight: "bold",
-                          padding: "8px",
-                          width: "25%",
-                        }}
-                      >
-                        SUIT NO
-                      </td>
-                      <td style={{ padding: "8px" }}>{selectedCase.suitNo}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ fontWeight: "bold", padding: "8px" }}>
-                        COURT
-                      </td>
-                      <td style={{ padding: "8px" }}>
-                        {selectedCase.court_name}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ fontWeight: "bold", padding: "8px" }}>
-                        DATE
-                      </td>
-                      <td style={{ padding: "8px" }}>
-                        {new Date(selectedCase.date).toLocaleDateString()}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ fontWeight: "bold", padding: "8px" }}>
-                        CLIENT
-                      </td>
-                      <td style={{ padding: "8px" }}>
-                        {selectedCase.client_name}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ fontWeight: "bold", padding: "8px" }}>
-                        PARTIES
-                      </td>
-                      <td style={{ padding: "8px" }}>
-                        {selectedCase.parties || "Not specified"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ fontWeight: "bold", padding: "8px" }}>
-                        SUBJECT MATTER
-                      </td>
-                      <td style={{ padding: "8px" }}>
-                        <div
-                          dangerouslySetInnerHTML={renderHTML(
-                            selectedCase.subject_matter
-                          )}
-                        />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ fontWeight: "bold", padding: "8px" }}>
-                        CRUX OF THE MATTER
-                      </td>
-                      <td style={{ padding: "8px" }}>
-                        <div
-                          dangerouslySetInnerHTML={renderHTML(
-                            selectedCase.crux_of_matter
-                          )}
-                        />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ fontWeight: "bold", padding: "8px" }}>
-                        STATUS
-                      </td>
-                      <td style={{ padding: "8px" }}>
-                        <div
-                          dangerouslySetInnerHTML={renderHTML(
-                            selectedCase.statusOfMatter
-                          )}
-                        />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ fontWeight: "bold", padding: "8px" }}>
-                        WITNESSES
-                      </td>
-                      <td style={{ padding: "8px" }}>
-                        {selectedCase.witnesses || "Not specified"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ fontWeight: "bold", padding: "8px" }}>
-                        DOCUMENTS
-                      </td>
-                      <td style={{ padding: "8px" }}>
-                        {selectedCase.documents || "Not specified"}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse mb-4">
+                    <tbody>
+                      {[
+                        ["SUIT NO", selectedPDFData.suitNo],
+                        ["PARTIES", selectedPDFData.client_name],
+                        ["VS.", "VS."],
+                        ...(selectedPDFData.parties
+                          ?.split("\n")
+                          .map((party) => ["", party]) || []),
+                        ["COUNSEL FOR", selectedPDFData.client_name],
+                        [
+                          "SUBJECT MATTER",
+                          <div
+                            dangerouslySetInnerHTML={renderHTML(
+                              selectedPDFData.subject_matter
+                            )}
+                          />,
+                        ],
+                        [
+                          "CRUX OF THE MATTER",
+                          <div
+                            dangerouslySetInnerHTML={renderHTML(
+                              selectedPDFData.crux_of_matter
+                            )}
+                          />,
+                        ],
+                        [
+                          "LIST OF WITNESSES",
+                          <div
+                            dangerouslySetInnerHTML={renderHTML(
+                              selectedPDFData.witnesses
+                            )}
+                          />,
+                        ],
+                        [
+                          "LIST OF DOCUMENTS",
+                          <div
+                            dangerouslySetInnerHTML={renderHTML(
+                              selectedPDFData.documents
+                            )}
+                          />,
+                        ],
+                        [
+                          "EXPENSES",
+                          selectedPDFData.expenses || "Not specified",
+                        ],
+                        [
+                          "STATUS OF THE MATTER THUS FAR",
+                          <div
+                            dangerouslySetInnerHTML={renderHTML(
+                              selectedPDFData.status_of_matter
+                            )}
+                          />,
+                        ],
+                      ].map(([label, value], index) => (
+                        <tr key={index} className="border-b">
+                          <td className="font-semibold p-2 md:p-3 align-top w-1/3 md:w-1/4">
+                            {label}
+                          </td>
+                          <td className="p-2 md:p-3 align-top">{value}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           ) : (
-            <div style={{ textAlign: "center", padding: "40px" }}>
-              <div className="empty-state">
-                <h2>Select a case from the sidebar to view details</h2>
-                <p>Click on any case to display the full details</p>
-              </div>
+            <div className="empty-state text-center p-10 bg-gray-50 rounded-lg">
+              <h2 className="text-xl font-medium mb-2">
+                Select a case from the sidebar
+              </h2>
+              <p className="text-gray-600 mb-4">
+                Click on any case to display the full details
+              </p>
+              {isMobile && (
+                <Button
+                  type="primary"
+                  onClick={() => setMobileSidebarVisible(true)}
+                >
+                  Browse Cases
+                </Button>
+              )}
             </div>
           )}
         </Content>
@@ -286,4 +340,4 @@ const CourtCaseList = () => {
   );
 };
 
-export default CourtCaseList;
+export default CaseDocumentViewer;

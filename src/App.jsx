@@ -13,16 +13,25 @@ import CourtList from "./pages/CourtList";
 import CaseDocumentViewer from "./pages/ClientCaseList";
 import ClientAddCase from "./pages/ClientAddCase";
 import CourtCaseLsit from "./pages/CourtCaseLsit";
+import useIsMobile from "../useIsMobile";
 
 const { Content } = Layout;
 
 function App() {
+  const isMobile = useIsMobile();
+
   return (
     <Layout className="min-h-screen">
       <Sidebar />
-      <Layout>
+      <Layout style={{ marginLeft: isMobile ? 0 : 250 }}>
         <Header />
-        <Content className="p-6 bg-gray-50">
+        <Content
+          style={{
+            marginTop: 40,
+            marginLeft: isMobile ? 0 : 10,
+            marginRight: isMobile ? 0 : 10,
+          }}
+        >
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/cases" element={<CasesList />} />
