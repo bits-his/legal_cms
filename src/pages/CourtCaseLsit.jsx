@@ -14,14 +14,15 @@ import "./CaseDocumentViewer.css";
 
 const { Sider, Content } = Layout;
 
-const CaseDocumentViewer = () => {
+const CourtCaseList = () => {
   const [selectedCase, setSelectedCase] = useState(null);
   const [searchText, setSearchText] = useState("");
-  const [clientCases, setClientCases] = useState([]);
+  const [courtCases, setCourtCases] = useState([]);
   const [loading, setLoading] = useState(false);
   const [mobileSidebarVisible, setMobileSidebarVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const clientId = useParams().id;
+  const [selectedPDFData, setSelectedPDFData] = useState(null);
+  const courtId = useParams().id;
 
   useEffect(() => {
     const handleResize = () => {
@@ -32,10 +33,11 @@ const CaseDocumentViewer = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const fetchClientDetails = () => {
+  const fetchCourtCases = () => {
     setLoading(true);
-    _get(
-      `getClientDetails/${clientId}`,
+    _post(
+      `getCaseByCourt`,
+      { court_id: courtId },
       (res) => {
         if (res.success) {
           const casesData = res.data || [];
@@ -46,20 +48,20 @@ const CaseDocumentViewer = () => {
               ? caseItem.subject_matter
                   .replace(/<[^>]*>/g, "")
                   .substring(0, 60) + "..."
-              : `Case ${caseItem.suit_no}`,
+              : `Case ${caseItem.suitNo}`,
           }));
-          setClientCases(casesWithKeys);
+          setCourtCases(casesWithKeys);
 
           if (casesWithKeys.length > 0) {
             handleViewPDF(casesWithKeys[0]);
           }
         } else {
-          message.error(res.message || "Failed to load client details");
+          message.error(res.message || "Failed to load court cases");
         }
         setLoading(false);
       },
       () => {
-        message.error("Failed to load client details");
+        message.error("Failed to load court cases");
         setLoading(false);
       }
     );
@@ -70,7 +72,7 @@ const CaseDocumentViewer = () => {
     setLoading(true);
     _post(
       `getCaseBySuitNo`,
-      { suitNo: record.suit_no },
+      { suitNo: record.suitNo },
       (res) => {
         if (res.success) {
           setSelectedPDFData(res.data[0]);
@@ -125,12 +127,12 @@ const CaseDocumentViewer = () => {
   };
 
   useEffect(() => {
-    fetchClientDetails();
-  }, [clientId]);
+    fetchCourtCases();
+  }, [courtId]);
 
-  const filteredCases = clientCases.filter(
+  const filteredCases = courtCases.filter(
     (caseItem) =>
-      caseItem.suit_no?.toLowerCase().includes(searchText.toLowerCase()) ||
+      caseItem.suitNo?.toLowerCase().includes(searchText.toLowerCase()) ||
       caseItem.subject_matter
         ?.toLowerCase()
         .includes(searchText.toLowerCase()) ||
@@ -144,7 +146,7 @@ const CaseDocumentViewer = () => {
   const renderSidebarContent = () => (
     <>
       <div className="p-4 border-b">
-        <h3 className="text-lg font-semibold">Client Cases</h3>
+        <h3 className="text-lg font-semibold">Court Cases</h3>
         <Input
           placeholder="Search cases..."
           prefix={<SearchOutlined />}
@@ -166,7 +168,7 @@ const CaseDocumentViewer = () => {
             className="case-menu-item"
           >
             <div className="case-menu-content">
-              <span className="suit-no font-medium">{caseItem.suit_no}</span>
+              <span className="suit-no font-medium">{caseItem.suitNo}</span>
               <span className="case-title text-sm text-gray-600 truncate">
                 {caseItem.title}
               </span>
@@ -190,7 +192,7 @@ const CaseDocumentViewer = () => {
           className="mr-2"
         />
         <h1 className="text-lg font-semibold truncate">
-          {selectedCase?.client_name || "Client Cases"}
+          {selectedCase?.courtName || "Court Cases"}
         </h1>
       </div>
 
@@ -207,7 +209,7 @@ const CaseDocumentViewer = () => {
 
       {/* Mobile Drawer */}
       <Drawer
-        title="Client Cases"
+        title="Court Cases"
         placement="left"
         open={mobileSidebarVisible}
         onClose={() => setMobileSidebarVisible(false)}
@@ -226,9 +228,9 @@ const CaseDocumentViewer = () => {
               <div className="document-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                   <h1 className="text-xl font-semibold">
-                    Client:{" "}
+                    Court:{" "}
                     <span className="font-normal">
-                      {selectedPDFData.client_name}
+                      {selectedPDFData.courtName}
                     </span>
                   </h1>
                 </div>
@@ -244,8 +246,7 @@ const CaseDocumentViewer = () => {
 
               <div className="pdf-content bg-white p-4 md:p-6 rounded-lg shadow-sm border">
                 <h1 className="text-center underline font-bold mb-6 text-xl">
-                  DETAILED SUMMARY OF INFORMATION ON CHAIRMAN'S CASES AT THE
-                  HIGH COURT
+                  DETAILED SUMMARY OF CASES AT THE HIGH COURT
                 </h1>
 
                 <div className="overflow-x-auto">
@@ -340,4 +341,4 @@ const CaseDocumentViewer = () => {
   );
 };
 
-export default CaseDocumentViewer;
+export default CourtCaseList;
