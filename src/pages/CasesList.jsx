@@ -89,41 +89,139 @@ export default function CasesList() {
 
   const handleViewPDF = (record) => {
     setLoading(true);
-    _post(
-      `getCaseBySuitNo`,
-      { suitNo: record.suitNo || record.suit_no },
-      (res) => {
-        if (res.success) {
-          setSelectedPDFData(res.data[0]);
-          setShowPDFModal(true);
-        } else {
-          message.error("Failed to fetch case PDF details");
+    // Try to get the case ID, if not available try to get by suitNo
+    const caseId = record.id || record.case_id;
+    if (caseId) {
+      _get(
+        `getCaseById/${caseId}`,
+        (res) => {
+          if (res.success) {
+            setSelectedPDFData(res.data);
+            setShowPDFModal(true);
+          } else {
+            message.error("Failed to fetch case PDF details");
+          }
+          setLoading(false);
+        },
+        () => {
+          message.error("Server error while fetching PDF case data");
+          setLoading(false);
         }
-        setLoading(false);
-      },
-      () => {
-        message.error("Server error while fetching PDF case data");
-        setLoading(false);
-      }
-    );
+      );
+    } else {
+      // Fallback to the original method if caseId is not available
+      _post(
+        `getCaseBySuitNo`,
+        { suitNo: record.suitNo || record.suit_no },
+        (res) => {
+          if (res.success) {
+            // The stored procedure response might not have document objects with URLs
+            // So if the first result has documents as an array of objects with URLs, use it directly
+            // Otherwise, we might need to make another call to getCaseById if we have the ID
+            const caseData = res.data[0];
+            if (caseData && caseData.id) {
+              // If the result has an ID, re-fetch with getCaseById to get documents with URLs
+              _get(
+                `getCaseById/${caseData.id}`,
+                (fullRes) => {
+                  if (fullRes.success) {
+                    setSelectedPDFData(fullRes.data);
+                    setShowPDFModal(true);
+                  } else {
+                    // If getCaseById fails, use the original data
+                    setSelectedPDFData(caseData);
+                    setShowPDFModal(true);
+                  }
+                  setLoading(false);
+                },
+                () => {
+                  // On error, use original data
+                  setSelectedPDFData(caseData);
+                  setShowPDFModal(true);
+                  setLoading(false);
+                }
+              );
+            } else {
+              setSelectedPDFData(caseData);
+              setShowPDFModal(true);
+              setLoading(false);
+            }
+          } else {
+            message.error("Failed to fetch case PDF details");
+            setLoading(false);
+          }
+        },
+        () => {
+          message.error("Server error while fetching PDF case data");
+          setLoading(false);
+        }
+      );
+    }
   };
 
   const fetchClientDetails = (clientId) => {
+    setLoading(true);
+    // First get client details using the stored procedure
     _get(
       `getClientDetails/${clientId}`,
       (res) => {
         if (res.success) {
           const casesData = res.data || [];
-          setClientCases(casesData);
-          setSelectedClient(
-            casesData.length > 0 ? casesData[0].client_name : "Client"
-          );
-          setIsModalVisible(true);
+          
+          // Create an array of promises to fetch full case details
+          const fetchPromises = casesData.map(caseData => {
+            const caseId = caseData.id || caseData.case_id;
+            if (caseId) {
+              return new Promise((resolve) => {
+                _get(
+                  `getCaseById/${caseId}`,
+                  (fullCaseResult) => {
+                    if (fullCaseResult.success) {
+                      resolve(fullCaseResult.data);
+                    } else {
+                      // If getCaseById fails, use the original data
+                      resolve(caseData);
+                    }
+                  },
+                  (error) => {
+                    console.error("Error fetching full case details:", error);
+                    resolve(caseData); // Use original data as fallback
+                  }
+                );
+              });
+            } else {
+              return Promise.resolve(caseData); // Resolve with original data if no ID found
+            }
+          });
+          
+          // Wait for all promises to complete
+          Promise.all(fetchPromises)
+            .then(updatedCasesData => {
+              setClientCases(updatedCasesData);
+              setSelectedClient(
+                updatedCasesData.length > 0 ? updatedCasesData[0].clientName || updatedCasesData[0].client_name : "Client"
+              );
+              setLoading(false);
+              setIsModalVisible(true);
+            })
+            .catch(error => {
+              console.error("Error processing case details:", error);
+              setClientCases(casesData); // Fallback to original data
+              setSelectedClient(
+                casesData.length > 0 ? casesData[0].client_name : "Client"
+              );
+              setLoading(false);
+              setIsModalVisible(true);
+            });
         } else {
           message.error(res.message || "Failed to load client details");
+          setLoading(false);
         }
       },
-      () => message.error("Failed to load client details")
+      () => {
+        message.error("Failed to load client details");
+        setLoading(false);
+      }
     );
   };
 
@@ -262,7 +360,36 @@ export default function CasesList() {
       title: "Documents",
       dataIndex: "documents",
       key: "documents",
-      render: (docs) => docs?.join(", "),
+      render: (docs) => {
+        if (!docs || !Array.isArray(docs)) return "No documents";
+        
+        return (
+          <div>
+            {docs.map((doc, index) => (
+              <div key={index} className="mb-1">
+                {doc.documentUrl ? (
+                  <a 
+                    href={doc.documentUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ 
+                      color: '#1890ff', 
+                      textDecoration: 'underline',
+                      display: 'inline-flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    {doc.name}
+                    <span style={{ marginLeft: '4px' }}>↗</span>
+                  </a>
+                ) : (
+                  <span>{doc.name}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      },
     },
     {
       title: "Expenses",
@@ -310,7 +437,7 @@ export default function CasesList() {
         </Button>
       </div>
 
-      <Card className="shadow-sm">
+      <Card className="glass bg-white/25 backdrop-blur-lg border border-white/30 shadow-lg">
         <div className="mb-4 flex flex-col sm:flex-row gap-4">
           <Search
             placeholder="Search by suit no, client, court, or subject..."
@@ -319,6 +446,7 @@ export default function CasesList() {
             onChange={(e) => setSearchText(e.target.value)}
             style={{ maxWidth: 400 }}
             prefix={<SearchOutlined />}
+            className="bg-white/50 rounded-lg"
           />
         </div>
 
@@ -336,6 +464,7 @@ export default function CasesList() {
           }}
           scroll={{ x: 800 }}
           size="middle"
+          className="bg-white/30 rounded-lg"
         />
       </Card>
 
@@ -448,12 +577,34 @@ export default function CasesList() {
                 <tr className="border-gray-300">
                   <td className="py-2 font-bold">LIST OF DOCUMENTS</td>
                   <td className="py-2">
-                    <div
-                      style={{ whiteSpace: "normal", wordWrap: "break-word" }}
-                      dangerouslySetInnerHTML={{
-                        __html: selectedPDFData.documents || "Not specified",
-                      }}
-                    />
+                    <div style={{ whiteSpace: "normal", wordWrap: "break-word" }}>
+                      {selectedPDFData.documents && Array.isArray(selectedPDFData.documents) && selectedPDFData.documents.length > 0 ? (
+                        selectedPDFData.documents.map((doc, index) => (
+                          <div key={index} className="mb-1">
+                            {doc.documentUrl ? (
+                              <a 
+                                href={doc.documentUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                style={{ 
+                                  color: '#1890ff', 
+                                  textDecoration: 'underline',
+                                  display: 'inline-flex',
+                                  alignItems: 'center'
+                                }}
+                              >
+                                {doc.name}
+                                <span style={{ marginLeft: '4px' }}>↗</span>
+                              </a>
+                            ) : (
+                              <span>{doc.name}</span>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        "Not specified"
+                      )}
+                    </div>
                   </td>
                 </tr>
                 <tr className="border-gray-300">

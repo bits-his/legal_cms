@@ -49,6 +49,11 @@ export default function AddCase() {
     courtId: "",
   });
 
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [uploadedDocumentUrl, setUploadedDocumentUrl] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
+
   useEffect(() => {
     _get(
       "getCourts",
@@ -113,7 +118,10 @@ export default function AddCase() {
     const finalData = {
       ...values,
       witnesses: caseData.witnesses.map((w) => w.name),
-      documents: caseData.documents.map((d) => d.name),
+      documents: caseData.documents.map((d) => ({
+        name: d.name,
+        documentUrl: d.documentUrl || null
+      })),
       parties: caseData.parties,
       subjectTo: caseData.subjectTo,
       subjectMatter: caseData.subjectMatter,
@@ -135,6 +143,62 @@ export default function AddCase() {
       },
       () => message.error("Error submitting case")
     ).finally(() => setLoading(false));
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    setUploadError("");
+    
+    try {
+      // Validate file type
+      const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'image/jpeg', 'image/jpg', 'image/png'];
+      if (!validTypes.includes(file.type)) {
+        throw new Error('Invalid file type. Please upload PDF, DOC, DOCX, TXT, JPG, or PNG files.');
+      }
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('File size exceeds 10MB limit.');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'nibbes_kitchen_unsigned');
+
+      const response = await fetch('https://api.cloudinary.com/v1_1/dv0gb0cy2/auto/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.secure_url) {
+        setUploadedDocumentUrl(data.secure_url);
+        setUploadedFileName(file.name);
+        
+        // Add the uploaded document to the documents list
+        setCaseData((prev) => ({
+          ...prev,
+          documents: [
+            ...prev.documents,
+            { id: `cloud-${Date.now()}`, name: file.name, documentUrl: data.secure_url }
+          ]
+        }));
+        
+        message.success('Document uploaded successfully to Cloudinary');
+      } else {
+        throw new Error('Upload failed: ' + (data.error?.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadError(error.message || 'Upload failed');
+      message.error(error.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -385,6 +449,7 @@ export default function AddCase() {
                       ]}
                     >
                       {item.name}
+                      {item.documentUrl && <span style={{ marginLeft: '8px', fontSize: '12px', color: 'green' }}>(uploaded)</span>}
                     </List.Item>
                   )}
                 />
@@ -412,6 +477,40 @@ export default function AddCase() {
                     updateCaseData("statusOfMatter", editor.getData())
                   }
                 />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* Document Upload */}
+          <Divider orientation="left" style={{ borderColor: '#1890ff', color: '#1890ff', fontSize: '16px', fontWeight: 'bold' }}>Document Upload</Divider>
+          <Row gutter={[16, 16]}>
+            <Col xs={24}>
+              <Form.Item label="Upload Case Document">
+                <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                    className="w-full"
+                  />
+                  <div className="mt-2 text-sm text-gray-600">
+                    Supported formats: PDF, DOC, DOCX, TXT, JPG, JPEG, PNG. Max size: 10MB
+                  </div>
+                  {uploading && (
+                    <div className="mt-2 text-blue-600 flex items-center">
+                      <span>Uploading document... Please wait</span>
+                      <div className="ml-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                    </div>
+                  )}
+                  {uploadError && <div className="mt-2 text-red-600">{uploadError}</div>}
+                  {uploadedDocumentUrl && (
+                    <div className="mt-2 text-green-600 flex items-center">
+                      <span className="mr-2">✓</span> 
+                      <span>Document uploaded successfully: {uploadedFileName}</span>
+                    </div>
+                  )}
+                </div>
               </Form.Item>
             </Col>
           </Row>

@@ -135,6 +135,7 @@ export default function Dashboard() {
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Card
+            className="glass glass-hover bg-white/25 backdrop-blur-lg border border-white/30 shadow-lg hover:shadow-green-400/30 transition-all duration-300"
             onClick={() => navigate("/cases")}
             style={{ cursor: "pointer" }}
             loading={loading}
@@ -142,12 +143,14 @@ export default function Dashboard() {
             <Statistic
               title="Total Cases"
               value={stats.totalCases}
-              prefix={<FileTextOutlined className="text-blue-500" />}
+              prefix={<FileTextOutlined className="text-green-600 text-xl" />}
+              className="text-white"
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card
+            className="glass glass-hover bg-white/25 backdrop-blur-lg border border-white/30 shadow-lg hover:shadow-green-400/30 transition-all duration-300"
             onClick={() => navigate("/clients")}
             style={{ cursor: "pointer" }}
             loading={loading}
@@ -155,12 +158,14 @@ export default function Dashboard() {
             <Statistic
               title="Total Clients"
               value={stats.totalClients}
-              prefix={<UserOutlined className="text-green-500" />}
+              prefix={<UserOutlined className="text-green-600 text-xl" />}
+              className="text-white"
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card
+            className="glass glass-hover bg-white/25 backdrop-blur-lg border border-white/30 shadow-lg hover:shadow-green-400/30 transition-all duration-300"
             onClick={() => navigate("/courts")}
             style={{ cursor: "pointer" }}
             loading={loading}
@@ -168,12 +173,14 @@ export default function Dashboard() {
             <Statistic
               title="Total Courts"
               value={stats.totalCourts}
-              prefix={<BankOutlined className="text-purple-500" />}
+              prefix={<BankOutlined className="text-green-600 text-xl" />}
+              className="text-white"
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card
+            className="glass glass-hover bg-white/25 backdrop-blur-lg border border-white/30 shadow-lg hover:shadow-green-400/30 transition-all duration-300"
             onClick={() => navigate("/cases?status=pending")}
             style={{ cursor: "pointer" }}
             loading={loading}
@@ -181,13 +188,14 @@ export default function Dashboard() {
             <Statistic
               title="Pending Cases"
               value={stats.pendingCases}
-              prefix={<ClockCircleOutlined className="text-orange-500" />}
+              prefix={<ClockCircleOutlined className="text-green-600 text-xl" />}
+              className="text-white"
             />
           </Card>
         </Col>
       </Row>
 
-      <Card title="Recent Cases" className="shadow-sm" loading={loading}>
+      <Card title="Recent Cases" className="glass bg-white/25 backdrop-blur-lg border border-white/30 shadow-lg" loading={loading}>
         <div className="mb-4">
           <Search
             placeholder="Search cases..."
@@ -196,6 +204,7 @@ export default function Dashboard() {
             style={{ width: 300 }}
             onSearch={handleSearch}
             loading={searchLoading}
+            className="bg-white/50 rounded-lg"
           />
         </div>
         <Table
@@ -203,7 +212,7 @@ export default function Dashboard() {
           dataSource={recentCases}
           pagination={false}
           size="middle"
-          className="overflow-x-auto"
+          className="overflow-x-auto bg-white/30 rounded-lg"
           loading={searchLoading}
           rowKey={(record, index) => index}
           onRow={(record) => ({

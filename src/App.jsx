@@ -13,6 +13,8 @@ import CourtList from "./pages/CourtList";
 import CaseDocumentViewer from "./pages/ClientCaseList";
 import ClientAddCase from "./pages/ClientAddCase";
 import CourtCaseLsit from "./pages/CourtCaseLsit";
+import CaseCommunicationForm from "./pages/controller/CaseCommunicationForm";
+import CaseCommunicationList from "./pages/controller/CaseCommunicationList";
 import useIsMobile from "../useIsMobile";
 
 const { Content } = Layout;
@@ -44,6 +46,8 @@ function App() {
             <Route path="/courts/add" element={<AddCourt />} />
             <Route path="/client-cases/:id" element={<CaseDocumentViewer />} />
             <Route path="/court-cases/:id" element={<CourtCaseLsit />} />
+            <Route path="/case-communication/add" element={<CaseCommunicationForm />} />
+            <Route path="/case-communication/list" element={<CaseCommunicationList />} />
           </Routes>
         </Content>
       </Layout>
