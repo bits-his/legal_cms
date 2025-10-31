@@ -10,7 +10,6 @@ import {
   BankOutlined,
   MenuOutlined,
   MessageOutlined,
-  PlusCircleOutlined,
 } from "@ant-design/icons";
 
 const { Sider } = Layout;
