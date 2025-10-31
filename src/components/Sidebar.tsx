@@ -46,12 +46,7 @@ const Sidebar: React.FC = () => {
       key: "/case-communication/list",
       icon: <MessageOutlined />,
       label: "Case Communications",
-    },
-    {
-      key: "/case-communication/add",
-      icon: <PlusCircleOutlined />,
-      label: "Add Communication",
-    },
+    }
   ];
 
   const handleResize = () => {
